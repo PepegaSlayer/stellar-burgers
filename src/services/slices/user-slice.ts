@@ -8,7 +8,7 @@ import {
   TLoginData,
   TRegisterData,
   updateUserApi
-} from '@api';
+} from '../../utils/burger-api';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TIngredient, TUser } from '@utils-types';
 import { setCookie, deleteCookie } from '../../utils/cookie';
@@ -32,44 +32,6 @@ const initialState: IUserData = {
   isLoading: false
 };
 
-// export const fetchUser = createAsyncThunk(
-//   'user/fetchUser',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const response = await getUserApi();
-//       return response.user;
-//     } catch (error) {
-//       return rejectWithValue('Не удалось загрузить данные пользователя');
-//     }
-//   }
-// );
-
-// export const refreshUserToken = createAsyncThunk(
-//   'user/refreshToken',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const data = await refreshToken();
-//       setCookie('accessToken', data.accessToken);
-//       setCookie('refreshToken', data.refreshToken);
-//       return data.accessToken;
-//     } catch (error) {
-//       return rejectWithValue('Не удалось обновить токены');
-//     }
-//   }
-// );
-
-// export const updateUserAction = createAsyncThunk(
-//   'user/updateUser',
-//   async (userData: Partial<TUser>, { rejectWithValue }) => {
-//     try {
-//       const response = await updateUserApi(userData);
-//       return response.user;
-//     } catch (error) {
-//       return rejectWithValue('Не удалось обновить данные пользователя');
-//     }
-//   }
-// );
-
 export const registerUser = createAsyncThunk(
   'auth/register',
   async (data: TRegisterData) => await registerUserApi(data)
@@ -83,6 +45,16 @@ export const loginUser = createAsyncThunk(
 export const logoutUser = createAsyncThunk(
   'auth/logout',
   async () => await logoutApi()
+);
+
+export const getUser = createAsyncThunk(
+  'auth/user',
+  async () => await getUserApi()
+);
+
+export const refresh = createAsyncThunk(
+  'auth/token',
+  async () => await refreshToken()
 );
 
 export const userSlice = createSlice({
@@ -145,49 +117,26 @@ export const userSlice = createSlice({
         state.error = null;
         deleteCookie('accessToken');
         localStorage.removeItem('refreshToken');
+      })
+      // getUser
+      // login
+      .addCase(getUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getUser.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+        state.isAuth = true;
+      })
+      .addCase(getUser.rejected, (state, action) => {
+        state.error = action.error.message ?? 'Неизвестная ошибка';
+        console.log(action.error.message);
+        state.isLoading = false;
+      })
+      .addCase(refresh.fulfilled, (state, action) => {
+        setCookie('accessToken', action.payload.accessToken);
+        localStorage.setItem('refreshToken', action.payload.refreshToken);
       });
-
-    // fetchUser
-    //   .addCase(fetchUser.pending, (state) => {
-    //     state.isLoading = true;
-    //     state.error = null;
-    //   })
-    //   .addCase(fetchUser.fulfilled, (state, action) => {
-    //     state.user = action.payload;
-    //     state.isAuth = true;
-    //     state.isLoading = false;
-    //   })
-    //   .addCase(fetchUser.rejected, (state, action) => {
-    //     state.error = action.payload as string;
-    //     state.isLoading = false;
-    //   })
-    //   // updateUser
-    //   .addCase(updateUserAction.pending, (state) => {
-    //     state.isLoading = true;
-    //     state.error = null;
-    //   })
-    //   .addCase(updateUserAction.fulfilled, (state, action) => {
-    //     state.user = { ...state.user, ...action.payload };
-    //     state.isLoading = false;
-    //   })
-    //   .addCase(updateUserAction.rejected, (state, action) => {
-    //     state.error = action.payload as string;
-    //     state.isLoading = false;
-    //   })
-    //   // refreshUserToken
-    //   .addCase(refreshUserToken.pending, (state) => {
-    //     state.isLoading = true;
-    //     state.error = null;
-    //   })
-    //   .addCase(refreshUserToken.fulfilled, (state, action) => {
-    //     state.isLoading = false;
-    //     state.error = null;
-    //     // Здесь accessToken можно использовать в будущем запросах
-    //   })
-    //   .addCase(refreshUserToken.rejected, (state, action) => {
-    //     state.isLoading = false;
-    //     state.error = action.payload as string;
-    //   });
   }
 });
 
