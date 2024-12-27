@@ -3,7 +3,7 @@ const accessToken =
 const refreshToken =
   'ff7975c3edf57b3535d488c1a188ef800d0be60cd63a707aedfb8874c314235f47a9f0853a380af9';
 
-describe.skip('Конструктор', () => {
+describe('Конструктор', () => {
   beforeEach(() => {
     cy.intercept('GET', '/api/ingredients', { fixture: 'ingredients.json' }).as(
       'getIngredients'
